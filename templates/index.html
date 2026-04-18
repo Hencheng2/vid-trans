@@ -1,0 +1,1530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LinguaVid — Video Translation Studio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet" />
+  <style>
+    /* ══════════════════════════════════════
+       DESIGN TOKENS & RESET
+    ══════════════════════════════════════ */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --ink:       #0d0f14;
+      --ink-soft:  #3a3d4a;
+      --ink-muted: #7a7e8e;
+      --surface:   #f5f4f0;
+      --surface-2: #edecea;
+      --surface-3: #e2e0db;
+      --accent:    #e8521a;
+      --accent-2:  #f7a84a;
+      --accent-dark: #b83d0f;
+      --glass:     rgba(245, 244, 240, 0.72);
+      --radius:    14px;
+      --radius-lg: 22px;
+      --shadow:    0 4px 24px rgba(13,15,20,0.10);
+      --shadow-lg: 0 12px 48px rgba(13,15,20,0.16);
+      --font-head: 'Syne', sans-serif;
+      --font-body: 'DM Sans', sans-serif;
+      --transition: 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: var(--font-body);
+      background: var(--surface);
+      color: var(--ink);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ══════════════════════════════════════
+       NOISE TEXTURE OVERLAY
+    ══════════════════════════════════════ */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.035'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ══════════════════════════════════════
+       HEADER / NAV
+    ══════════════════════════════════════ */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(16px) saturate(1.4);
+      background: var(--glass);
+      border-bottom: 1px solid var(--surface-3);
+      padding: 0 clamp(1rem, 5vw, 3rem);
+    }
+
+    .header-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 64px;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: var(--ink);
+    }
+
+    .logo-icon {
+      width: 36px;
+      height: 36px;
+      background: var(--accent);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 18px;
+    }
+
+    .logo-text {
+      font-family: var(--font-head);
+      font-size: 1.2rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+
+    .logo-text span { color: var(--accent); }
+
+    .header-badge {
+      background: var(--ink);
+      color: var(--surface);
+      font-size: 0.7rem;
+      font-weight: 500;
+      padding: 4px 10px;
+      border-radius: 100px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    /* ══════════════════════════════════════
+       HERO SECTION
+    ══════════════════════════════════════ */
+    .hero {
+      position: relative;
+      padding: clamp(3rem, 8vw, 6rem) clamp(1rem, 5vw, 3rem) clamp(2rem, 5vw, 4rem);
+      max-width: 1200px;
+      margin: 0 auto;
+      z-index: 1;
+    }
+
+    .hero-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--surface-2);
+      border: 1px solid var(--surface-3);
+      border-radius: 100px;
+      padding: 6px 14px;
+      font-size: 0.78rem;
+      font-weight: 500;
+      color: var(--ink-soft);
+      margin-bottom: 1.5rem;
+      letter-spacing: 0.02em;
+    }
+
+    .hero-eyebrow::before {
+      content: '';
+      width: 7px;
+      height: 7px;
+      background: var(--accent);
+      border-radius: 50%;
+      animation: pulse-dot 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.7); }
+    }
+
+    .hero h1 {
+      font-family: var(--font-head);
+      font-size: clamp(2.4rem, 6vw, 4.2rem);
+      font-weight: 800;
+      line-height: 1.08;
+      letter-spacing: -0.03em;
+      max-width: 700px;
+      margin-bottom: 1rem;
+    }
+
+    .hero h1 em {
+      font-style: normal;
+      color: var(--accent);
+      position: relative;
+    }
+
+    .hero p {
+      font-size: clamp(1rem, 2vw, 1.15rem);
+      color: var(--ink-soft);
+      max-width: 500px;
+      line-height: 1.65;
+      font-weight: 300;
+      margin-bottom: 0.5rem;
+    }
+
+    .hero-stats {
+      display: flex;
+      gap: 2rem;
+      margin-top: 2rem;
+      flex-wrap: wrap;
+    }
+
+    .stat {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .stat-num {
+      font-family: var(--font-head);
+      font-size: 1.8rem;
+      font-weight: 800;
+      color: var(--ink);
+      line-height: 1;
+    }
+
+    .stat-label {
+      font-size: 0.78rem;
+      color: var(--ink-muted);
+      margin-top: 3px;
+      font-weight: 400;
+    }
+
+    /* ══════════════════════════════════════
+       MAIN CONTENT GRID
+    ══════════════════════════════════════ */
+    .main-grid {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 clamp(1rem, 5vw, 3rem) 4rem;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+      z-index: 1;
+      position: relative;
+    }
+
+    @media (max-width: 900px) {
+      .main-grid { grid-template-columns: 1fr; }
+    }
+
+    /* ══════════════════════════════════════
+       CARDS
+    ══════════════════════════════════════ */
+    .card {
+      background: white;
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--surface-3);
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      transition: box-shadow var(--transition), transform var(--transition);
+    }
+
+    .card:hover { box-shadow: var(--shadow-lg); }
+
+    .card-header {
+      padding: 1.4rem 1.6rem 1rem;
+      border-bottom: 1px solid var(--surface-2);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .card-icon {
+      width: 34px;
+      height: 34px;
+      border-radius: 9px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+
+    .card-icon.orange { background: #fff0e8; color: var(--accent); }
+    .card-icon.blue   { background: #e8f0ff; color: #3366dd; }
+    .card-icon.green  { background: #e8fff0; color: #1a9e5a; }
+    .card-icon.purple { background: #f0e8ff; color: #8833dd; }
+
+    .card-title {
+      font-family: var(--font-head);
+      font-weight: 700;
+      font-size: 1rem;
+      letter-spacing: -0.01em;
+    }
+
+    .card-body { padding: 1.4rem 1.6rem; }
+
+    /* ══════════════════════════════════════
+       TAB SWITCHER (Upload / Record)
+    ══════════════════════════════════════ */
+    .tab-group {
+      display: flex;
+      background: var(--surface-2);
+      border-radius: 10px;
+      padding: 3px;
+      margin-bottom: 1.4rem;
+    }
+
+    .tab-btn {
+      flex: 1;
+      padding: 9px;
+      border: none;
+      background: transparent;
+      border-radius: 8px;
+      font-family: var(--font-body);
+      font-size: 0.88rem;
+      font-weight: 500;
+      color: var(--ink-muted);
+      cursor: pointer;
+      transition: all var(--transition);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .tab-btn.active {
+      background: white;
+      color: var(--ink);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* ══════════════════════════════════════
+       UPLOAD DROP ZONE
+    ══════════════════════════════════════ */
+    .drop-zone {
+      border: 2px dashed var(--surface-3);
+      border-radius: var(--radius);
+      padding: 2.5rem 1.5rem;
+      text-align: center;
+      cursor: pointer;
+      transition: all var(--transition);
+      position: relative;
+    }
+
+    .drop-zone:hover, .drop-zone.drag-over {
+      border-color: var(--accent);
+      background: #fff8f5;
+    }
+
+    .drop-zone input[type="file"] {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+      width: 100%;
+      height: 100%;
+    }
+
+    .drop-icon {
+      font-size: 2.4rem;
+      margin-bottom: 0.75rem;
+      display: block;
+    }
+
+    .drop-title {
+      font-family: var(--font-head);
+      font-weight: 700;
+      font-size: 1.05rem;
+      color: var(--ink);
+      margin-bottom: 0.4rem;
+    }
+
+    .drop-subtitle {
+      font-size: 0.82rem;
+      color: var(--ink-muted);
+    }
+
+    .drop-subtitle strong { color: var(--accent); }
+
+    /* File Preview */
+    .file-preview {
+      display: none;
+      margin-top: 1rem;
+      padding: 0.85rem 1rem;
+      background: var(--surface-2);
+      border-radius: var(--radius);
+      align-items: center;
+      gap: 12px;
+    }
+
+    .file-preview.visible { display: flex; }
+
+    .file-thumb {
+      width: 48px;
+      height: 36px;
+      border-radius: 6px;
+      background: var(--surface-3);
+      object-fit: cover;
+    }
+
+    .file-info { flex: 1; min-width: 0; }
+
+    .file-name {
+      font-weight: 500;
+      font-size: 0.88rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .file-size { font-size: 0.75rem; color: var(--ink-muted); margin-top: 2px; }
+
+    .file-remove {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      border: none;
+      background: var(--surface-3);
+      color: var(--ink-soft);
+      cursor: pointer;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all var(--transition);
+    }
+
+    .file-remove:hover { background: #ffd5c8; color: var(--accent); }
+
+    /* ══════════════════════════════════════
+       CAMERA / RECORDING
+    ══════════════════════════════════════ */
+    .camera-container {
+      position: relative;
+      border-radius: var(--radius);
+      overflow: hidden;
+      background: #0d0f14;
+      aspect-ratio: 16/9;
+    }
+
+    #camera-preview {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .camera-overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-end;
+      padding: 1rem;
+      background: linear-gradient(to top, rgba(0,0,0,0.5) 0%, transparent 60%);
+    }
+
+    .camera-controls {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-top: 1rem;
+    }
+
+    .cam-btn {
+      padding: 9px 18px;
+      border-radius: 100px;
+      border: none;
+      font-family: var(--font-body);
+      font-size: 0.85rem;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all var(--transition);
+    }
+
+    .cam-btn.primary { background: var(--accent); color: white; }
+    .cam-btn.primary:hover { background: var(--accent-dark); }
+    .cam-btn.secondary { background: rgba(255,255,255,0.15); color: white; border: 1px solid rgba(255,255,255,0.25); backdrop-filter: blur(8px); }
+    .cam-btn.secondary:hover { background: rgba(255,255,255,0.25); }
+    .cam-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+    .rec-indicator {
+      display: none;
+      align-items: center;
+      gap: 6px;
+      color: white;
+      font-size: 0.82rem;
+      font-weight: 500;
+      background: rgba(232, 82, 26, 0.9);
+      padding: 5px 12px;
+      border-radius: 100px;
+      position: absolute;
+      top: 12px;
+      left: 12px;
+    }
+
+    .rec-indicator.active { display: flex; }
+
+    .rec-dot {
+      width: 8px;
+      height: 8px;
+      background: white;
+      border-radius: 50%;
+      animation: rec-blink 1s step-end infinite;
+    }
+
+    @keyframes rec-blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0; }
+    }
+
+    /* ══════════════════════════════════════
+       LANGUAGE SELECTOR
+    ══════════════════════════════════════ */
+    .lang-section { margin-top: 1.4rem; }
+
+    .lang-label {
+      font-size: 0.82rem;
+      font-weight: 500;
+      color: var(--ink-soft);
+      margin-bottom: 8px;
+      display: block;
+    }
+
+    .lang-search-wrap {
+      position: relative;
+      margin-bottom: 8px;
+    }
+
+    .lang-search-wrap svg {
+      position: absolute;
+      left: 11px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--ink-muted);
+      pointer-events: none;
+    }
+
+    .lang-search {
+      width: 100%;
+      padding: 9px 12px 9px 34px;
+      border: 1.5px solid var(--surface-3);
+      border-radius: 9px;
+      font-family: var(--font-body);
+      font-size: 0.88rem;
+      background: var(--surface-2);
+      color: var(--ink);
+      outline: none;
+      transition: border-color var(--transition);
+    }
+
+    .lang-search:focus { border-color: var(--accent); background: white; }
+
+    .lang-select {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1.5px solid var(--surface-3);
+      border-radius: 9px;
+      font-family: var(--font-body);
+      font-size: 0.9rem;
+      background: var(--surface-2);
+      color: var(--ink);
+      outline: none;
+      cursor: pointer;
+      transition: border-color var(--transition);
+      height: 160px;
+    }
+
+    .lang-select:focus { border-color: var(--accent); background: white; }
+    .lang-select option { padding: 4px; }
+
+    /* ══════════════════════════════════════
+       PROCESS BUTTON
+    ══════════════════════════════════════ */
+    .process-btn {
+      width: 100%;
+      margin-top: 1.4rem;
+      padding: 14px;
+      background: var(--ink);
+      color: var(--surface);
+      border: none;
+      border-radius: var(--radius);
+      font-family: var(--font-head);
+      font-size: 1rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all var(--transition);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .process-btn::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: var(--accent);
+      transform: translateX(-100%);
+      transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .process-btn:hover::before { transform: translateX(0); }
+    .process-btn span, .process-btn svg { position: relative; z-index: 1; }
+    .process-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .process-btn:disabled::before { display: none; }
+
+    /* ══════════════════════════════════════
+       PROGRESS PANEL
+    ══════════════════════════════════════ */
+    .progress-panel {
+      display: none;
+      margin-top: 1.4rem;
+    }
+
+    .progress-panel.visible { display: block; }
+
+    .stage-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 1rem;
+    }
+
+    .stage-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.85rem;
+      color: var(--ink-muted);
+      transition: color var(--transition);
+    }
+
+    .stage-item.active { color: var(--ink); }
+    .stage-item.done { color: #1a9e5a; }
+
+    .stage-dot {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      border: 2px solid var(--surface-3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-size: 10px;
+      transition: all var(--transition);
+    }
+
+    .stage-item.active .stage-dot {
+      border-color: var(--accent);
+      background: #fff0e8;
+    }
+
+    .stage-item.done .stage-dot {
+      border-color: #1a9e5a;
+      background: #e8fff0;
+      color: #1a9e5a;
+    }
+
+    .stage-spin {
+      width: 10px;
+      height: 10px;
+      border: 2px solid var(--accent);
+      border-top-color: transparent;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .progress-bar-wrap {
+      height: 6px;
+      background: var(--surface-2);
+      border-radius: 100px;
+      overflow: hidden;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--accent-2));
+      border-radius: 100px;
+      width: 0%;
+      transition: width 0.5s ease;
+    }
+
+    .progress-label {
+      font-size: 0.78rem;
+      color: var(--ink-muted);
+      margin-top: 6px;
+      text-align: right;
+    }
+
+    /* ══════════════════════════════════════
+       OUTPUT / RESULT PANEL
+    ══════════════════════════════════════ */
+    .result-panel {
+      display: none;
+      grid-column: 1 / -1;
+    }
+
+    .result-panel.visible { display: block; }
+
+    .video-player-wrap {
+      position: relative;
+      background: #0d0f14;
+      border-radius: var(--radius);
+      overflow: hidden;
+      aspect-ratio: 16/9;
+    }
+
+    #result-video {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: block;
+    }
+
+    .result-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 1.2rem;
+      flex-wrap: wrap;
+    }
+
+    .action-btn {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding: 10px 20px;
+      border-radius: var(--radius);
+      font-family: var(--font-body);
+      font-size: 0.88rem;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      transition: all var(--transition);
+      text-decoration: none;
+    }
+
+    .action-btn.filled { background: var(--accent); color: white; }
+    .action-btn.filled:hover { background: var(--accent-dark); }
+    .action-btn.outlined {
+      background: transparent;
+      color: var(--ink);
+      border: 1.5px solid var(--surface-3);
+    }
+    .action-btn.outlined:hover { background: var(--surface-2); border-color: var(--ink); }
+    .action-btn.dark { background: var(--ink); color: var(--surface); }
+    .action-btn.dark:hover { background: var(--ink-soft); }
+
+    /* ══════════════════════════════════════
+       ERROR STATE
+    ══════════════════════════════════════ */
+    .error-toast {
+      display: none;
+      margin-top: 1rem;
+      padding: 12px 16px;
+      background: #fff0ee;
+      border: 1.5px solid #f5c5bc;
+      border-radius: var(--radius);
+      color: #c0391b;
+      font-size: 0.88rem;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .error-toast.visible { display: flex; }
+
+    /* ══════════════════════════════════════
+       INFO SIDEBAR CARD
+    ══════════════════════════════════════ */
+    .info-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+
+    .info-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 14px 0;
+      border-bottom: 1px solid var(--surface-2);
+    }
+
+    .info-item:last-child { border-bottom: none; }
+
+    .info-num {
+      width: 26px;
+      height: 26px;
+      background: var(--accent);
+      color: white;
+      border-radius: 7px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-head);
+      font-weight: 700;
+      font-size: 0.78rem;
+      flex-shrink: 0;
+    }
+
+    .info-text-title {
+      font-weight: 500;
+      font-size: 0.9rem;
+      margin-bottom: 2px;
+    }
+
+    .info-text-sub {
+      font-size: 0.78rem;
+      color: var(--ink-muted);
+      line-height: 1.5;
+    }
+
+    /* ══════════════════════════════════════
+       LANGUAGE BADGE GRID
+    ══════════════════════════════════════ */
+    .lang-badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 1rem;
+    }
+
+    .lang-badge {
+      background: var(--surface-2);
+      border: 1px solid var(--surface-3);
+      border-radius: 6px;
+      padding: 3px 9px;
+      font-size: 0.72rem;
+      color: var(--ink-soft);
+      font-weight: 400;
+    }
+
+    /* ══════════════════════════════════════
+       FOOTER
+    ══════════════════════════════════════ */
+    footer {
+      background: var(--ink);
+      color: var(--surface);
+      padding: 2rem clamp(1rem, 5vw, 3rem);
+      margin-top: 2rem;
+    }
+
+    .footer-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .footer-logo {
+      font-family: var(--font-head);
+      font-weight: 800;
+      font-size: 1rem;
+      letter-spacing: -0.02em;
+    }
+
+    .footer-logo span { color: var(--accent); }
+
+    .footer-note {
+      font-size: 0.78rem;
+      color: rgba(245,244,240,0.45);
+    }
+
+    /* ══════════════════════════════════════
+       RESPONSIVE
+    ══════════════════════════════════════ */
+    @media (max-width: 640px) {
+      .hero-stats { gap: 1.2rem; }
+      .result-actions { flex-direction: column; }
+      .action-btn { justify-content: center; }
+    }
+
+    /* ══════════════════════════════════════
+       ANIMATIONS
+    ══════════════════════════════════════ */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .card { animation: fadeUp 0.5s ease both; }
+    .card:nth-child(2) { animation-delay: 0.08s; }
+    .card:nth-child(3) { animation-delay: 0.16s; }
+
+    .shimmer {
+      background: linear-gradient(90deg, var(--surface-2) 25%, var(--surface-3) 50%, var(--surface-2) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+    }
+
+    @keyframes shimmer {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- HEADER -->
+  <header>
+    <div class="header-inner">
+      <a class="logo" href="#">
+        <div class="logo-icon">🎬</div>
+        <span class="logo-text">Lingua<span>Vid</span></span>
+      </a>
+      <span class="header-badge">Video Translation Studio</span>
+    </div>
+  </header>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-eyebrow">AI-Powered Translation</div>
+    <h1>Translate your video into <em>any language</em></h1>
+    <p>Upload or record your video, pick a target language, and get a translated version with burned-in subtitles — ready to download in minutes.</p>
+    <div class="hero-stats">
+      <div class="stat"><span class="stat-num">100+</span><span class="stat-label">Languages</span></div>
+      <div class="stat"><span class="stat-num">30m</span><span class="stat-label">Max Duration</span></div>
+      <div class="stat"><span class="stat-num">AI</span><span class="stat-label">Transcription</span></div>
+    </div>
+  </section>
+
+  <!-- MAIN GRID -->
+  <div class="main-grid">
+
+    <!-- ── INPUT CARD ── -->
+    <div class="card" style="grid-column: 1 / -1;">
+      <div class="card-header">
+        <div class="card-icon orange">🎥</div>
+        <span class="card-title">Video Input</span>
+      </div>
+      <div class="card-body">
+
+        <!-- TAB GROUP -->
+        <div class="tab-group">
+          <button class="tab-btn active" data-tab="upload">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            Upload File
+          </button>
+          <button class="tab-btn" data-tab="record">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3" fill="currentColor"/></svg>
+            Record Camera
+          </button>
+        </div>
+
+        <!-- UPLOAD TAB -->
+        <div class="tab-panel active" id="tab-upload">
+          <div class="drop-zone" id="drop-zone">
+            <input type="file" id="file-input" accept="video/*" />
+            <span class="drop-icon">📂</span>
+            <p class="drop-title">Drop your video here</p>
+            <p class="drop-subtitle">or click to browse &nbsp;·&nbsp; <strong>MP4, MOV, AVI, MKV, WEBM</strong></p>
+            <p class="drop-subtitle" style="margin-top:4px;">Max 30 minutes · 500MB</p>
+          </div>
+          <div class="file-preview" id="file-preview">
+            <div class="file-thumb" id="file-thumb-container">🎞️</div>
+            <div class="file-info">
+              <div class="file-name" id="file-name">video.mp4</div>
+              <div class="file-size" id="file-size">0 MB</div>
+            </div>
+            <button class="file-remove" id="file-remove" title="Remove file">✕</button>
+          </div>
+        </div>
+
+        <!-- RECORD TAB -->
+        <div class="tab-panel" id="tab-record">
+          <div class="camera-container">
+            <video id="camera-preview" autoplay muted playsinline></video>
+            <div class="rec-indicator" id="rec-indicator">
+              <span class="rec-dot"></span> REC <span id="rec-timer">0:00</span>
+            </div>
+            <div class="camera-overlay" id="camera-overlay-text" style="display:flex;align-items:center;justify-content:center;">
+              <p style="color:rgba(255,255,255,0.5);font-size:0.85rem;">Camera not started</p>
+            </div>
+          </div>
+          <div class="camera-controls">
+            <button class="cam-btn secondary" id="btn-start-cam">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+              Start Camera
+            </button>
+            <button class="cam-btn primary" id="btn-rec" disabled>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="8"/></svg>
+              Record
+            </button>
+            <button class="cam-btn secondary" id="btn-stop-rec" disabled>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
+              Stop
+            </button>
+            <button class="cam-btn secondary" id="btn-flip-cam">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 4v6h6"/><path d="M23 20v-6h-6"/><path d="M20.49 9A9 9 0 005.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 013.51 15"/></svg>
+              Flip
+            </button>
+          </div>
+          <div id="recorded-preview-wrap" style="display:none; margin-top:1rem;">
+            <p style="font-size:0.8rem;color:var(--ink-muted);margin-bottom:6px;">Recorded preview:</p>
+            <video id="recorded-preview" controls style="width:100%;border-radius:var(--radius);background:#0d0f14;"></video>
+          </div>
+        </div>
+
+        <!-- LANGUAGE SELECTOR -->
+        <div class="lang-section">
+          <label class="lang-label">Target Language</label>
+          <div class="lang-search-wrap">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <input class="lang-search" type="text" id="lang-search" placeholder="Search language…" />
+          </div>
+          <select class="lang-select" id="lang-select" size="6">
+            {% for code, name in languages.items() %}
+            <option value="{{ code }}" {% if code == 'es' %}selected{% endif %}>{{ name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- ERROR TOAST -->
+        <div class="error-toast" id="error-toast">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          <span id="error-msg">Something went wrong.</span>
+        </div>
+
+        <!-- PROCESS BUTTON -->
+        <button class="process-btn" id="process-btn" disabled>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          <span>Translate Video</span>
+        </button>
+
+        <!-- PROGRESS PANEL -->
+        <div class="progress-panel" id="progress-panel">
+          <div class="stage-list">
+            <div class="stage-item" data-stage="transcribe">
+              <div class="stage-dot" id="dot-transcribe"></div>
+              <span>Transcribing speech with Whisper AI</span>
+            </div>
+            <div class="stage-item" data-stage="translate">
+              <div class="stage-dot" id="dot-translate"></div>
+              <span>Translating to target language</span>
+            </div>
+            <div class="stage-item" data-stage="subtitle">
+              <div class="stage-dot" id="dot-subtitle"></div>
+              <span>Generating subtitle file</span>
+            </div>
+            <div class="stage-item" data-stage="render">
+              <div class="stage-dot" id="dot-render"></div>
+              <span>Burning subtitles into video</span>
+            </div>
+          </div>
+          <div class="progress-bar-wrap">
+            <div class="progress-bar-fill" id="progress-bar"></div>
+          </div>
+          <p class="progress-label" id="progress-label">Starting…</p>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ── RESULT CARD ── -->
+    <div class="card result-panel" id="result-panel">
+      <div class="card-header">
+        <div class="card-icon green">✅</div>
+        <span class="card-title">Translated Video</span>
+      </div>
+      <div class="card-body">
+        <div class="video-player-wrap">
+          <video id="result-video" controls playsinline></video>
+        </div>
+        <div class="result-actions">
+          <button class="action-btn filled" id="btn-download">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Download Video
+          </button>
+          <button class="action-btn outlined" id="btn-download-srt">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+            Download SRT
+          </button>
+          <button class="action-btn dark" id="btn-reprocess">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 4v6h6"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg>
+            Re-translate Original
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── HOW IT WORKS CARD ── -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon blue">ℹ️</div>
+        <span class="card-title">How It Works</span>
+      </div>
+      <div class="card-body">
+        <div class="info-list">
+          <div class="info-item">
+            <div class="info-num">1</div>
+            <div>
+              <div class="info-text-title">Upload or Record</div>
+              <div class="info-text-sub">Choose a video from your device or record live using your front or rear camera. Max 30 minutes.</div>
+            </div>
+          </div>
+          <div class="info-item">
+            <div class="info-num">2</div>
+            <div>
+              <div class="info-text-title">Select Language</div>
+              <div class="info-text-sub">Pick any of 100+ target languages. The AI auto-detects the source language from the audio.</div>
+            </div>
+          </div>
+          <div class="info-item">
+            <div class="info-num">3</div>
+            <div>
+              <div class="info-text-title">AI Processing</div>
+              <div class="info-text-sub">Whisper AI transcribes the speech, then Google Translate converts each segment accurately.</div>
+            </div>
+          </div>
+          <div class="info-item">
+            <div class="info-num">4</div>
+            <div>
+              <div class="info-text-title">Download & Share</div>
+              <div class="info-text-sub">Get your video with burned-in subtitles or download the SRT file for use with any player.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── SUPPORTED LANGUAGES CARD ── -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon purple">🌍</div>
+        <span class="card-title">Featured Languages</span>
+      </div>
+      <div class="card-body">
+        <p style="font-size:0.85rem;color:var(--ink-muted);line-height:1.6;margin-bottom:0.5rem;">
+          Over <strong>100 languages</strong> supported. The system auto-detects the spoken language in your video, so no need to set a source language.
+        </p>
+        <div class="lang-badges">
+          <span class="lang-badge">🇬🇧 English</span>
+          <span class="lang-badge">🇪🇸 Spanish</span>
+          <span class="lang-badge">🇫🇷 French</span>
+          <span class="lang-badge">🇩🇪 German</span>
+          <span class="lang-badge">🇯🇵 Japanese</span>
+          <span class="lang-badge">🇨🇳 Chinese</span>
+          <span class="lang-badge">🇵🇹 Portuguese</span>
+          <span class="lang-badge">🇷🇺 Russian</span>
+          <span class="lang-badge">🇸🇦 Arabic</span>
+          <span class="lang-badge">🇮🇳 Hindi</span>
+          <span class="lang-badge">🇰🇷 Korean</span>
+          <span class="lang-badge">🇮🇹 Italian</span>
+          <span class="lang-badge">🇳🇱 Dutch</span>
+          <span class="lang-badge">🇵🇱 Polish</span>
+          <span class="lang-badge">🇹🇷 Turkish</span>
+          <span class="lang-badge">🇻🇳 Vietnamese</span>
+          <span class="lang-badge">🇮🇩 Indonesian</span>
+          <span class="lang-badge">🇹🇭 Thai</span>
+          <span class="lang-badge">🇸🇪 Swedish</span>
+          <span class="lang-badge">+ 80 more</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="footer-inner">
+      <span class="footer-logo">Lingua<span>Vid</span></span>
+      <span class="footer-note">Powered by OpenAI Whisper · Google Translate · FFmpeg</span>
+    </div>
+  </footer>
+
+  <script>
+  (() => {
+    'use strict';
+
+    // ── STATE ──
+    let currentFile = null;         // File from upload
+    let recordedBlob = null;        // Blob from camera recording
+    let activeJobId  = null;
+    let originalJobId = null;       // For re-processing
+    let pollInterval = null;
+    let mediaStream  = null;
+    let mediaRecorder = null;
+    let recordedChunks = [];
+    let recTimerInterval = null;
+    let recSeconds = 0;
+    let activeTab = 'upload';
+    let useFrontCamera = true;
+
+    // ── ELEMENTS ──
+    const dropZone     = document.getElementById('drop-zone');
+    const fileInput    = document.getElementById('file-input');
+    const filePreview  = document.getElementById('file-preview');
+    const fileName     = document.getElementById('file-name');
+    const fileSize     = document.getElementById('file-size');
+    const fileRemove   = document.getElementById('file-remove');
+
+    const langSearch   = document.getElementById('lang-search');
+    const langSelect   = document.getElementById('lang-select');
+
+    const processBtn   = document.getElementById('process-btn');
+    const progressPanel= document.getElementById('progress-panel');
+    const progressBar  = document.getElementById('progress-bar');
+    const progressLabel= document.getElementById('progress-label');
+
+    const resultPanel  = document.getElementById('result-panel');
+    const resultVideo  = document.getElementById('result-video');
+    const btnDownload  = document.getElementById('btn-download');
+    const btnDownloadSrt= document.getElementById('btn-download-srt');
+    const btnReprocess = document.getElementById('btn-reprocess');
+
+    const errorToast   = document.getElementById('error-toast');
+    const errorMsg     = document.getElementById('error-msg');
+
+    const cameraPreview= document.getElementById('camera-preview');
+    const recIndicator = document.getElementById('rec-indicator');
+    const recTimerEl   = document.getElementById('rec-timer');
+    const overlayText  = document.getElementById('camera-overlay-text');
+    const btnStartCam  = document.getElementById('btn-start-cam');
+    const btnRec       = document.getElementById('btn-rec');
+    const btnStopRec   = document.getElementById('btn-stop-rec');
+    const btnFlipCam   = document.getElementById('btn-flip-cam');
+    const recPreviewWrap = document.getElementById('recorded-preview-wrap');
+    const recPreview   = document.getElementById('recorded-preview');
+
+    // ── TAB SWITCHING ──
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+        btn.classList.add('active');
+        const tab = btn.dataset.tab;
+        document.getElementById('tab-' + tab).classList.add('active');
+        activeTab = tab;
+        checkReady();
+        if (tab !== 'record' && mediaStream) {
+          stopCamera();
+        }
+      });
+    });
+
+    // ── DRAG & DROP ──
+    dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+    dropZone.addEventListener('drop', e => {
+      e.preventDefault();
+      dropZone.classList.remove('drag-over');
+      const f = e.dataTransfer.files[0];
+      if (f && f.type.startsWith('video/')) setFile(f);
+    });
+
+    fileInput.addEventListener('change', () => {
+      if (fileInput.files[0]) setFile(fileInput.files[0]);
+    });
+
+    fileRemove.addEventListener('click', () => {
+      currentFile = null;
+      fileInput.value = '';
+      filePreview.classList.remove('visible');
+      dropZone.style.display = '';
+      checkReady();
+    });
+
+    function setFile(f) {
+      currentFile = f;
+      fileName.textContent = f.name;
+      fileSize.textContent = (f.size / (1024*1024)).toFixed(1) + ' MB';
+      filePreview.classList.add('visible');
+      dropZone.style.display = 'none';
+      hideError();
+      checkReady();
+    }
+
+    // ── LANGUAGE SEARCH ──
+    langSearch.addEventListener('input', () => {
+      const q = langSearch.value.toLowerCase();
+      Array.from(langSelect.options).forEach(opt => {
+        opt.style.display = opt.text.toLowerCase().includes(q) ? '' : 'none';
+      });
+    });
+
+    // ── READY CHECK ──
+    function checkReady() {
+      if (activeTab === 'upload') {
+        processBtn.disabled = !currentFile;
+      } else {
+        processBtn.disabled = !recordedBlob;
+      }
+    }
+
+    // ── CAMERA ──
+    async function startCamera() {
+      try {
+        if (mediaStream) mediaStream.getTracks().forEach(t => t.stop());
+        const constraints = {
+          video: { facingMode: useFrontCamera ? 'user' : 'environment' },
+          audio: true
+        };
+        mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
+        cameraPreview.srcObject = mediaStream;
+        overlayText.style.display = 'none';
+        btnStartCam.textContent = '🟢 Camera On';
+        btnRec.disabled = false;
+      } catch(err) {
+        showError('Camera error: ' + err.message);
+      }
+    }
+
+    function stopCamera() {
+      if (mediaStream) {
+        mediaStream.getTracks().forEach(t => t.stop());
+        mediaStream = null;
+      }
+      cameraPreview.srcObject = null;
+      btnStartCam.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg> Start Camera`;
+      btnRec.disabled = true;
+    }
+
+    btnStartCam.addEventListener('click', () => {
+      if (mediaStream) { stopCamera(); }
+      else { startCamera(); }
+    });
+
+    btnFlipCam.addEventListener('click', () => {
+      useFrontCamera = !useFrontCamera;
+      if (mediaStream) startCamera();
+    });
+
+    btnRec.addEventListener('click', () => {
+      if (!mediaStream) return;
+      recordedChunks = [];
+      recordedBlob = null;
+      recPreviewWrap.style.display = 'none';
+
+      const options = { mimeType: 'video/webm;codecs=vp8,opus' };
+      try {
+        mediaRecorder = new MediaRecorder(mediaStream, options);
+      } catch(e) {
+        mediaRecorder = new MediaRecorder(mediaStream);
+      }
+
+      mediaRecorder.ondataavailable = e => {
+        if (e.data && e.data.size > 0) recordedChunks.push(e.data);
+      };
+
+      mediaRecorder.onstop = () => {
+        recordedBlob = new Blob(recordedChunks, { type: 'video/webm' });
+        const url = URL.createObjectURL(recordedBlob);
+        recPreview.src = url;
+        recPreviewWrap.style.display = 'block';
+        clearInterval(recTimerInterval);
+        recIndicator.classList.remove('active');
+        checkReady();
+      };
+
+      mediaRecorder.start(250);
+      recIndicator.classList.add('active');
+      recSeconds = 0;
+      recTimerEl.textContent = '0:00';
+      recTimerInterval = setInterval(() => {
+        recSeconds++;
+        const m = Math.floor(recSeconds / 60);
+        const s = recSeconds % 60;
+        recTimerEl.textContent = m + ':' + String(s).padStart(2, '0');
+        // Auto stop at 30 min
+        if (recSeconds >= 1800) btnStopRec.click();
+      }, 1000);
+
+      btnRec.disabled = true;
+      btnStopRec.disabled = false;
+    });
+
+    btnStopRec.addEventListener('click', () => {
+      if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+        mediaRecorder.stop();
+      }
+      btnRec.disabled = false;
+      btnStopRec.disabled = true;
+    });
+
+    // ── PROCESS ──
+    processBtn.addEventListener('click', () => startProcessing());
+
+    async function startProcessing() {
+      const lang = langSelect.value;
+      if (!lang) { showError('Please select a target language.'); return; }
+
+      hideError();
+      processBtn.disabled = true;
+
+      // Reset stages
+      document.querySelectorAll('.stage-item').forEach(el => {
+        el.classList.remove('active','done');
+        el.querySelector('.stage-dot').innerHTML = '';
+      });
+
+      progressBar.style.width = '0%';
+      progressLabel.textContent = 'Starting…';
+      progressPanel.classList.add('visible');
+      resultPanel.classList.remove('visible');
+
+      // Build FormData
+      const formData = new FormData();
+      formData.append('language', lang);
+
+      if (activeTab === 'upload' && currentFile) {
+        formData.append('video', currentFile);
+      } else if (activeTab === 'record' && recordedBlob) {
+        formData.append('video', recordedBlob, 'recording.webm');
+      } else {
+        showError('No video source selected.');
+        processBtn.disabled = false;
+        return;
+      }
+
+      try {
+        const res = await fetch('/upload', { method: 'POST', body: formData });
+        const data = await res.json();
+        if (data.error) { showError(data.error); processBtn.disabled = false; return; }
+        activeJobId = data.job_id;
+        originalJobId = activeJobId;
+        startPolling(activeJobId);
+      } catch(err) {
+        showError('Upload failed: ' + err.message);
+        processBtn.disabled = false;
+      }
+    }
+
+    // ── POLLING ──
+    function startPolling(jobId) {
+      if (pollInterval) clearInterval(pollInterval);
+      pollInterval = setInterval(() => pollProgress(jobId), 1500);
+    }
+
+    async function pollProgress(jobId) {
+      try {
+        const res = await fetch('/progress/' + jobId);
+        const data = await res.json();
+
+        progressBar.style.width = data.percent + '%';
+        progressLabel.textContent = data.message || '';
+
+        updateStages(data.stage, data.percent);
+
+        if (data.error) {
+          clearInterval(pollInterval);
+          showError('Processing failed: ' + data.error);
+          processBtn.disabled = false;
+          progressPanel.classList.remove('visible');
+          return;
+        }
+
+        if (data.done) {
+          clearInterval(pollInterval);
+          onProcessingComplete(jobId);
+        }
+      } catch(err) {
+        // silent retry
+      }
+    }
+
+    const stageOrder = ['transcribe', 'translate', 'subtitle', 'render'];
+
+    function updateStages(currentStage, percent) {
+      const idx = stageOrder.indexOf(currentStage);
+      stageOrder.forEach((s, i) => {
+        const item = document.querySelector(`.stage-item[data-stage="${s}"]`);
+        const dot  = item.querySelector('.stage-dot');
+        item.classList.remove('active', 'done');
+        if (i < idx || (i === idx && percent >= 95)) {
+          item.classList.add('done');
+          dot.innerHTML = '✓';
+        } else if (i === idx) {
+          item.classList.add('active');
+          dot.innerHTML = '<div class="stage-spin"></div>';
+        } else {
+          dot.innerHTML = '';
+        }
+      });
+    }
+
+    function onProcessingComplete(jobId) {
+      // Mark all done
+      stageOrder.forEach(s => {
+        const item = document.querySelector(`.stage-item[data-stage="${s}"]`);
+        item.classList.remove('active');
+        item.classList.add('done');
+        item.querySelector('.stage-dot').innerHTML = '✓';
+      });
+      progressBar.style.width = '100%';
+      progressLabel.textContent = 'Complete!';
+
+      // Load result video
+      resultVideo.src = '/stream/' + jobId + '?t=' + Date.now();
+      resultPanel.classList.add('visible');
+      resultPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      processBtn.disabled = false;
+    }
+
+    // ── DOWNLOAD ──
+    btnDownload.addEventListener('click', () => {
+      if (!activeJobId) return;
+      const a = document.createElement('a');
+      a.href = '/download/' + activeJobId;
+      a.download = 'translated_video.mp4';
+      a.click();
+    });
+
+    btnDownloadSrt.addEventListener('click', () => {
+      if (!activeJobId) return;
+      const a = document.createElement('a');
+      a.href = '/subtitle/' + activeJobId;
+      a.download = 'subtitles.srt';
+      a.click();
+    });
+
+    // ── RE-PROCESS ──
+    btnReprocess.addEventListener('click', () => {
+      // Switch to upload tab and let user change language
+      resultPanel.classList.remove('visible');
+      progressPanel.classList.remove('visible');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+
+    // ── ERROR ──
+    function showError(msg) {
+      errorMsg.textContent = msg;
+      errorToast.classList.add('visible');
+    }
+
+    function hideError() {
+      errorToast.classList.remove('visible');
+    }
+
+  })();
+  </script>
+
+</body>
+</html>
